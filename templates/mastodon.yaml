@@ -1,0 +1,362 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mastodon
+  labels:
+    name: mastodon
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: mastodon
+spec:
+  tls:
+    - hosts:
+      - mastodon.local
+      secretName: mastodon-tls
+  rules:
+    - host: mastodon.local
+      http:
+        paths:
+          - backend:
+              serviceName: mastodon
+              servicePort: web
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mastodon
+  namespace: mastodon
+spec:
+  selector:
+    app: mastodon
+  ports:
+  - name: web
+    port: 3000
+    targetPort: web
+  - name: streaming
+    port: 4000
+    targetPort: streaming
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: mastodon
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: redis
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: mastodon
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: postgres
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mastodon
+  namespace: mastodon
+spec:
+  selector:
+    matchLabels:
+      app: mastodon
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mastodon
+    spec:
+      volumes:
+      - name: mastodon-assets
+        emptyDir: {}
+      - name: mastodon-packs
+        emptyDir: {}
+      - name: mastodon-system
+        emptyDir: {}
+      containers:
+      - name: web
+        image: tootsuite/mastodon:v2.3.3
+        command: [
+          "/bin/bash", "-c",
+            "rake assets:precompile && \
+             rake db:migrate && \
+             bundle exec rails s -p 3000 -b 0.0.0.0"
+        ]
+        ports:
+        - name: web
+          containerPort: 3000
+        resources:
+          requests:
+            memory: 350Mi
+            cpu: 100m
+        envFrom:
+        - configMapRef:
+            name: mastodon-config
+        - secretRef:
+            name: mastodon-secrets
+        volumeMounts:
+          - mountPath: /mastodon/public/assets
+            name: mastodon-assets
+          - mountPath: /mastodon/public/packs
+            name: mastodon-packs
+          - mountPath: /mastodon/public/system
+            name: mastodon-system
+      - name: sidekiq
+        image: tootsuite/mastodon:v2.3.3
+        command: [
+          "bundle", "exec", "sidekiq",
+            "-q", "default",
+            "-q", "mailers",
+            "-q", "pull",
+            "-q", "push"
+        ]
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 50m
+        envFrom:
+        - configMapRef:
+            name: mastodon-config
+        - secretRef:
+            name: mastodon-secrets
+        volumeMounts:
+          - mountPath: /mastodon/public/assets
+            name: mastodon-assets
+          - mountPath: /mastodon/public/packs
+            name: mastodon-packs
+          - mountPath: /mastodon/public/system
+            name: mastodon-system
+      - name: streaming
+        image: tootsuite/mastodon:v2.3.3
+        command: [ "yarn", "start" ]
+        ports:
+        - name: streaming
+          containerPort: 4000
+        resources:
+          requests:
+            memory: 32Mi
+            cpu: 25m
+        envFrom:
+        - configMapRef:
+            name: mastodon-config
+        - secretRef:
+            name: mastodon-secrets
+      - name: smtpd
+        image: wodby/opensmtpd:6-1.3.0
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: postgres
+  namespace: mastodon
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:alpine
+        env:
+          - name: POSTGRES_USER
+            value: mastodon
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: DB_PASS
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        ports:
+          - name: postgres
+            containerPort: 5432
+        volumeMounts:
+          - mountPath: /var/lib/postgresql/data
+            name: postgres-volume
+      volumes:
+      - name: postgres-volume
+        persistentVolumeClaim:
+          claimName: postgres-volume-claim
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: redis
+  namespace: mastodon
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  replicas: 1
+  template:
+    metadata:
+      namespace: mastodon
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+        ports:
+        - name: redis
+          containerPort: 6379
+        volumeMounts:
+        - name: redis-volume
+          mountPath: /data
+      volumes:
+      - name: redis-volume
+        persistentVolumeClaim:
+          claimName: redis-volume-claim
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastodon-config
+  namespace: mastodon
+data:
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  DB_HOST: postgres
+  DB_USER: mastodon
+  DB_NAME: mastodon
+  DB_PORT: "5432"
+  LOCAL_DOMAIN: "mastodon.local"
+  LOCAL_HTTPS: "true"
+  SINGLE_USER_MODE: "true"
+  DEFAULT_LOCALE: "en"
+  SMTP_AUTH_METHOD: "none"
+  SMTP_OPENSSL_VERIFY_MODE: "none"
+  SMTP_PORT: "25"
+  SMTP_SERVER: "localhost"
+  SMTP_FROM_ADDRESS: "notifications@mastodon.local"
+  SMTP_DELIVERY_METHOD: "sendmail"
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mastodon-secrets
+  namespace: mastodon
+type: Opaque
+data:
+  OTP_SECRET: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
+  SECRET_KEY_BASE: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
+  PAPERCLIP_SECRET: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
+  DB_PASS: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mastodon-tls
+  namespace: mastodon
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDRENDQWZDZ0F3SUJBZ0lKQU8xNDhTUEpmN0tFTUEwR0NTcUdTSWIzRFFFQkN3VUFNQmt4RnpBVkJnTlYKQkFNTURtMWhjM1J2Wkc5dUxteHZZMkZzTUI0WERURTRNRFF3TnpJek1Ua3lOMW9YRFRFNU1EUXdOekl6TVRreQpOMW93R1RFWE1CVUdBMVVFQXd3T2JXRnpkRzlrYjI0dWJHOWpZV3d3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBCkE0SUJEd0F3Z2dFS0FvSUJBUURoRHV6anA4R3N2c0xlTzBJQWJHQ1BLYThXMVdrTFg2ZXJzVjdhMzJ4d2grdnYKRmhrUGtQczlDa3hmKytyY3ByNXJzTG5wU0IzN1hKWHQwckdmUWQxams2dVI4SW5tQUZEM0dIdHRsWHNYeDdObwp2ckZOanl2ZStaZGVKYTA4U3U5aUFFYnk4cklkR3ZQSFc5WUNwQjBvYk5EeXU1dnVaTHlYb095NWdaNmZKSWhtCklQMzN3cm56ZlJsWlZ1cWp4T3VjVXFja2djOVRLVUE1YllJVUFxYTNORk1JUlBMU1lkcHc4YlR4eEJ4TzlnZXoKQU90OHlJaHBzZjU3VENobVpsVXFzSms2bW9Id1RFS3lXTHFVcFRPektiSnUyUEVEd1RSRVIyVVdRNHJLR0dKMgpNaHdYRk81aE5uSjEzQlFBVUtsNlVLQUNXNG5nV2lTVVE0eEpaY2tIQWdNQkFBR2pVekJSTUIwR0ExVWREZ1FXCkJCU3hmZFlpcHFaOVN6KysyQVkrbmJHNTF2YkFXVEFmQmdOVkhTTUVHREFXZ0JTeGZkWWlwcVo5U3orKzJBWSsKbmJHNTF2YkFXVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUURBY1l5awpMWkdySnhtU081R09tTVlZcU5EM2hIeFlGaTI3ZGdEc0JiUWhETjNvd1BQM3BVcC9BY0VjdklXZ1dqOVBkY0tyCnJOUCtqemRCR0tYVXBBb1JENDdsSnc0WHhIeHZBaHRidzgzVHV4eEFaMitjZ1dKOHI5cmJKczVaUHZzb3V3ZjEKdDh6THVackhBTGFZZVJ0YXlvNmNkc0RNYnlrdFFpTzUxdmpkaDNGdytBSVJiSkJqa29aREJESjlWb21TVUtueAo1TVhIR1c1d2k1UWl4ZVFPNkR3RzJDQ21kZUhnd0l3czhDSGg0ME80S0dpZW4yYnJ1TmVremRqeW5LM2ZZdHJtCktrRnFBeGxmemVkL3l2Q1NSOTB5UUR2UTAxVFloZytUamZTVkhabUVnTG55RFB4L2NSSU84SUh1KzM3WVU5RXkKeHFsckJwNnp6UktlZ2cybAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRGhEdXpqcDhHc3ZzTGUKTzBJQWJHQ1BLYThXMVdrTFg2ZXJzVjdhMzJ4d2grdnZGaGtQa1BzOUNreGYrK3JjcHI1cnNMbnBTQjM3WEpYdAowckdmUWQxams2dVI4SW5tQUZEM0dIdHRsWHNYeDdOb3ZyRk5qeXZlK1pkZUphMDhTdTlpQUVieThySWRHdlBIClc5WUNwQjBvYk5EeXU1dnVaTHlYb095NWdaNmZKSWhtSVAzM3dybnpmUmxaVnVxanhPdWNVcWNrZ2M5VEtVQTUKYllJVUFxYTNORk1JUlBMU1lkcHc4YlR4eEJ4TzlnZXpBT3Q4eUlocHNmNTdUQ2htWmxVcXNKazZtb0h3VEVLeQpXTHFVcFRPektiSnUyUEVEd1RSRVIyVVdRNHJLR0dKMk1od1hGTzVoTm5KMTNCUUFVS2w2VUtBQ1c0bmdXaVNVClE0eEpaY2tIQWdNQkFBRUNnZ0VCQU5pODBQR2srdVZyaUtzUUVrM3FFVXVON3lwa041ZFdkVmpwcGRuTzFOWEMKY0RwOTQ0Q1VOUC9oelErYXdlSGhTdnpXNHhOLytpKzZTRUVTYVRCZjg5OFR0V1VFYXlqdklRbjFyOWdtM3JaVwpBYmRiL2RBZGt6aFcwYWsvUzRnRyttWThzaGNDRnZua25PUmUwc2tVVjJnNDh6anY2QWs3Umt3WUZDSEtiSUlBCms3emZONlVwMGxyTUROZFdDZjNYWFhsRUJDRTRjWFBhSFpWbXNFVXlLSEtjNCtNbytLWXlSNkhGdXBLUHByaUMKd0dSVGg1SjFyaHpVQk92QXhRSm5KS1AxVXV2SWRXeUpwWXF5d3R1aVhmSmlZcTBOVEFjTjQwbm1CRDBYMTBiWAoyMVA5K2twMDNJRzFQeDlGWkpKZm9vT0ZkMjd1d0JBTFVHdVBUZXI5alBFQ2dZRUEvYVVIVEdXejAraDAwZTBxClpqZW80VzNqNVJYUTQrMWxsVERXUG1FTEt0alViOHhZTFRoQXN6RWlGdjNwbEs4WGVPYkxpTEV6eW9PeWVhYWMKL05nOXIzS2RVV2liSmdrMk9rNStGWERzZXZvU1RaMHczd3NUajFsNWF1M0xwSlFKMHgvT3lYcnlZcG9YVVNBNwpOSW0rWHJ2ZG9HRWwvR3craFphWTRjR0FYRTBDZ1lFQTR5WHd4L3U1SHYwc3hRVU9DTEdraURZcWJqaEZ2c0VhClBySVlyRnM5RUlZRW5UTktOK0lyempORm9CT3BPL1hhbEVDOSt6ZWw1N1VLTWhnbHZwNVhtdkVCOHZnZXBzQTUKU2R6eCtsVlc3ZS9La3ZqZkc1bHFkT3JsaXZsMURPTktZUjA1TDYweTFPUkhPZGtIaU9YUWpPRDkwZyt3bnN0ZgozalRmUEduSkZLTUNnWUFWcVd0bkplUm11NXFHZHlmQTFRNFNPbzFVK2pqOXpqOTNyMVVNdk1MMFpOSTN2ZzdsCnhjRVl6S0Jwc0VPcmxBeUFJYzNPSGJ3YmxvVytoL0V1VXRWcHozTUtDZEgrUEprcC81d2EvcXJqa2NuUVlSVlUKWnlERGhGT3ZReUc2SzM1dlRtOGRtK2RwYmxtQmJ5dy9QMmhIdE9tbmtjUnB1MkRYamRYK3FjVHBuUUtCZ0RwSApyc3F3MUdPV0U5bU5IWGV2bElaNlYxS21UNGJNNXQzMU5nMXE3M1VBM2NnenM3UTQ3SUpnZDFuR0VhTFh4cmhKCkVEV1hwcEtYeWNEbW56Q1VVZWZvTkZiUndKT0tPR2l5THNmTEE1M1M2NGZnSU9aazY0S0tEbEVsQmhwRGF2OFYKejJsakorcWxrM3pOS1hpL2RrM2ZJR0M0TTluYVZvT2R6elVoOHp5L0FvR0FWditTQzJSNmg5Qjh3ZzAyU1dENQorRGNTUXFEVTB0YUhXdXJpTG9lZldidklkMGxVeEdVcmU1ZERRT25LOWpCVVVqT3dNOU02cnlUWFI1dFN5K0xECloyem5NeXhlWWhacG10QlZSRnVURXo1OEtCcXhsY1BJekNTNU0zQTZ2UjNaUFNDdjlrSEtkdkFDUkZoa1pDanoKbVNqSnF3dU5XTmNlNkNQTFVlVUIrZDQ9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: redis-volume
+  namespace: mastodon
+  labels:
+    name: redis-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  gcePersistentDisk:
+    pdName: "redis-volume"
+    fsType: "ext4"
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-volume
+  namespace: mastodon
+  labels:
+    name: postgres-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  gcePersistentDisk:
+    pdName: "postgres-volume"
+    fsType: "ext4"
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-volume-claim
+  namespace: mastodon
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-volume-claim
+  namespace: mastodon
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
