@@ -108,8 +108,8 @@ spec:
           containerPort: 3000
         resources:
           requests:
-            memory: 350Mi
-            cpu: 100m
+            memory: {{ .Values.mastodonMemory }}
+            cpu: {{ .Values.mastodonCpu }}
         envFrom:
         - configMapRef:
             name: mastodon-config
@@ -133,8 +133,8 @@ spec:
         ]
         resources:
           requests:
-            memory: 128Mi
-            cpu: 50m
+            memory: {{ .Values.sidekiqMemory }}
+            cpu: {{ .Values.sidekiqCpu }}
         envFrom:
         - configMapRef:
             name: mastodon-config
@@ -155,8 +155,8 @@ spec:
           containerPort: 4000
         resources:
           requests:
-            memory: 32Mi
-            cpu: 25m
+            memory: {{ .Values.streamingMemory }}
+            cpu: {{ .Values.streamingCpu }}
         envFrom:
         - configMapRef:
             name: mastodon-config
@@ -233,8 +233,8 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: 64Mi
-            cpu: 50m
+            memory: {{ .Values.redisMemory }}
+            cpu: {{ .Values.redisCPU }}
         ports:
         - name: redis
           containerPort: 6379
@@ -254,22 +254,22 @@ metadata:
   name: mastodon-config
   namespace: mastodon
 data:
-  REDIS_HOST: redis
-  REDIS_PORT: "6379"
-  DB_HOST: postgres
-  DB_USER: mastodon
-  DB_NAME: mastodon
-  DB_PORT: "5432"
-  LOCAL_DOMAIN: "mastodon.local"
-  LOCAL_HTTPS: "true"
-  SINGLE_USER_MODE: "true"
-  DEFAULT_LOCALE: "en"
-  SMTP_AUTH_METHOD: "none"
-  SMTP_OPENSSL_VERIFY_MODE: "none"
-  SMTP_PORT: "25"
-  SMTP_SERVER: "localhost"
-  SMTP_FROM_ADDRESS: "notifications@mastodon.local"
-  SMTP_DELIVERY_METHOD: "sendmail"
+  REDIS_HOST: {{ .Values.redisHost }}
+  REDIS_PORT: {{ .Values.redisPort }}
+  DB_HOST: {{ .Values.dbHost }}
+  DB_USER: {{ .Values.dbUser }}
+  DB_NAME: {{ .Values.dbName }}
+  DB_PORT: {{ .Values.dbPort }}
+  LOCAL_DOMAIN: {{ .Values.localDomain }}
+  LOCAL_HTTPS: {{ .Values.localHttps }}
+  SINGLE_USER_MODE: {{ .Values.singleUserMode }}
+  DEFAULT_LOCALE: {{ .Values.defaultLocal }}
+  SMTP_AUTH_METHOD: {{ .Values.smtpAuthMethod }}
+  SMTP_OPENSSL_VERIFY_MODE: {{ .Values.smtpOpensslVerifyMode }}
+  SMTP_PORT: {{ .Values.smtpPort }}
+  SMTP_SERVER: {{ .Values.smtpServer }}
+  SMTP_FROM_ADDRESS: {{ .Values.smtpFromAddress }}
+  SMTP_DELIVERY_METHOD: {{ .Values.smtpDeliveryMethod }}
 
 ---
 
@@ -280,10 +280,10 @@ metadata:
   namespace: mastodon
 type: Opaque
 data:
-  OTP_SECRET: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
-  SECRET_KEY_BASE: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
-  PAPERCLIP_SECRET: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
-  DB_PASS: ZGVmYXVsdC1pbnNlY3VyZS1zZWNyZXQ=
+  OTP_SECRET: {{ .Values.otpSecret | b64enc }}
+  SECRET_KEY_BASE: {{ .Values.secretKeyBase | b64enc }}
+  PAPERCLIP_SECRET: {{ .Values.paperclipSecret | b64enc }}
+  DB_PASS: {{ .Values.dbPass | b64enc }}
 
 ---
 
@@ -294,8 +294,8 @@ metadata:
   namespace: mastodon
 type: kubernetes.io/tls
 data:
-  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDRENDQWZDZ0F3SUJBZ0lKQU8xNDhTUEpmN0tFTUEwR0NTcUdTSWIzRFFFQkN3VUFNQmt4RnpBVkJnTlYKQkFNTURtMWhjM1J2Wkc5dUxteHZZMkZzTUI0WERURTRNRFF3TnpJek1Ua3lOMW9YRFRFNU1EUXdOekl6TVRreQpOMW93R1RFWE1CVUdBMVVFQXd3T2JXRnpkRzlrYjI0dWJHOWpZV3d3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBCkE0SUJEd0F3Z2dFS0FvSUJBUURoRHV6anA4R3N2c0xlTzBJQWJHQ1BLYThXMVdrTFg2ZXJzVjdhMzJ4d2grdnYKRmhrUGtQczlDa3hmKytyY3ByNXJzTG5wU0IzN1hKWHQwckdmUWQxams2dVI4SW5tQUZEM0dIdHRsWHNYeDdObwp2ckZOanl2ZStaZGVKYTA4U3U5aUFFYnk4cklkR3ZQSFc5WUNwQjBvYk5EeXU1dnVaTHlYb095NWdaNmZKSWhtCklQMzN3cm56ZlJsWlZ1cWp4T3VjVXFja2djOVRLVUE1YllJVUFxYTNORk1JUlBMU1lkcHc4YlR4eEJ4TzlnZXoKQU90OHlJaHBzZjU3VENobVpsVXFzSms2bW9Id1RFS3lXTHFVcFRPektiSnUyUEVEd1RSRVIyVVdRNHJLR0dKMgpNaHdYRk81aE5uSjEzQlFBVUtsNlVLQUNXNG5nV2lTVVE0eEpaY2tIQWdNQkFBR2pVekJSTUIwR0ExVWREZ1FXCkJCU3hmZFlpcHFaOVN6KysyQVkrbmJHNTF2YkFXVEFmQmdOVkhTTUVHREFXZ0JTeGZkWWlwcVo5U3orKzJBWSsKbmJHNTF2YkFXVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUURBY1l5awpMWkdySnhtU081R09tTVlZcU5EM2hIeFlGaTI3ZGdEc0JiUWhETjNvd1BQM3BVcC9BY0VjdklXZ1dqOVBkY0tyCnJOUCtqemRCR0tYVXBBb1JENDdsSnc0WHhIeHZBaHRidzgzVHV4eEFaMitjZ1dKOHI5cmJKczVaUHZzb3V3ZjEKdDh6THVackhBTGFZZVJ0YXlvNmNkc0RNYnlrdFFpTzUxdmpkaDNGdytBSVJiSkJqa29aREJESjlWb21TVUtueAo1TVhIR1c1d2k1UWl4ZVFPNkR3RzJDQ21kZUhnd0l3czhDSGg0ME80S0dpZW4yYnJ1TmVremRqeW5LM2ZZdHJtCktrRnFBeGxmemVkL3l2Q1NSOTB5UUR2UTAxVFloZytUamZTVkhabUVnTG55RFB4L2NSSU84SUh1KzM3WVU5RXkKeHFsckJwNnp6UktlZ2cybAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRGhEdXpqcDhHc3ZzTGUKTzBJQWJHQ1BLYThXMVdrTFg2ZXJzVjdhMzJ4d2grdnZGaGtQa1BzOUNreGYrK3JjcHI1cnNMbnBTQjM3WEpYdAowckdmUWQxams2dVI4SW5tQUZEM0dIdHRsWHNYeDdOb3ZyRk5qeXZlK1pkZUphMDhTdTlpQUVieThySWRHdlBIClc5WUNwQjBvYk5EeXU1dnVaTHlYb095NWdaNmZKSWhtSVAzM3dybnpmUmxaVnVxanhPdWNVcWNrZ2M5VEtVQTUKYllJVUFxYTNORk1JUlBMU1lkcHc4YlR4eEJ4TzlnZXpBT3Q4eUlocHNmNTdUQ2htWmxVcXNKazZtb0h3VEVLeQpXTHFVcFRPektiSnUyUEVEd1RSRVIyVVdRNHJLR0dKMk1od1hGTzVoTm5KMTNCUUFVS2w2VUtBQ1c0bmdXaVNVClE0eEpaY2tIQWdNQkFBRUNnZ0VCQU5pODBQR2srdVZyaUtzUUVrM3FFVXVON3lwa041ZFdkVmpwcGRuTzFOWEMKY0RwOTQ0Q1VOUC9oelErYXdlSGhTdnpXNHhOLytpKzZTRUVTYVRCZjg5OFR0V1VFYXlqdklRbjFyOWdtM3JaVwpBYmRiL2RBZGt6aFcwYWsvUzRnRyttWThzaGNDRnZua25PUmUwc2tVVjJnNDh6anY2QWs3Umt3WUZDSEtiSUlBCms3emZONlVwMGxyTUROZFdDZjNYWFhsRUJDRTRjWFBhSFpWbXNFVXlLSEtjNCtNbytLWXlSNkhGdXBLUHByaUMKd0dSVGg1SjFyaHpVQk92QXhRSm5KS1AxVXV2SWRXeUpwWXF5d3R1aVhmSmlZcTBOVEFjTjQwbm1CRDBYMTBiWAoyMVA5K2twMDNJRzFQeDlGWkpKZm9vT0ZkMjd1d0JBTFVHdVBUZXI5alBFQ2dZRUEvYVVIVEdXejAraDAwZTBxClpqZW80VzNqNVJYUTQrMWxsVERXUG1FTEt0alViOHhZTFRoQXN6RWlGdjNwbEs4WGVPYkxpTEV6eW9PeWVhYWMKL05nOXIzS2RVV2liSmdrMk9rNStGWERzZXZvU1RaMHczd3NUajFsNWF1M0xwSlFKMHgvT3lYcnlZcG9YVVNBNwpOSW0rWHJ2ZG9HRWwvR3craFphWTRjR0FYRTBDZ1lFQTR5WHd4L3U1SHYwc3hRVU9DTEdraURZcWJqaEZ2c0VhClBySVlyRnM5RUlZRW5UTktOK0lyempORm9CT3BPL1hhbEVDOSt6ZWw1N1VLTWhnbHZwNVhtdkVCOHZnZXBzQTUKU2R6eCtsVlc3ZS9La3ZqZkc1bHFkT3JsaXZsMURPTktZUjA1TDYweTFPUkhPZGtIaU9YUWpPRDkwZyt3bnN0ZgozalRmUEduSkZLTUNnWUFWcVd0bkplUm11NXFHZHlmQTFRNFNPbzFVK2pqOXpqOTNyMVVNdk1MMFpOSTN2ZzdsCnhjRVl6S0Jwc0VPcmxBeUFJYzNPSGJ3YmxvVytoL0V1VXRWcHozTUtDZEgrUEprcC81d2EvcXJqa2NuUVlSVlUKWnlERGhGT3ZReUc2SzM1dlRtOGRtK2RwYmxtQmJ5dy9QMmhIdE9tbmtjUnB1MkRYamRYK3FjVHBuUUtCZ0RwSApyc3F3MUdPV0U5bU5IWGV2bElaNlYxS21UNGJNNXQzMU5nMXE3M1VBM2NnenM3UTQ3SUpnZDFuR0VhTFh4cmhKCkVEV1hwcEtYeWNEbW56Q1VVZWZvTkZiUndKT0tPR2l5THNmTEE1M1M2NGZnSU9aazY0S0tEbEVsQmhwRGF2OFYKejJsakorcWxrM3pOS1hpL2RrM2ZJR0M0TTluYVZvT2R6elVoOHp5L0FvR0FWditTQzJSNmg5Qjh3ZzAyU1dENQorRGNTUXFEVTB0YUhXdXJpTG9lZldidklkMGxVeEdVcmU1ZERRT25LOWpCVVVqT3dNOU02cnlUWFI1dFN5K0xECloyem5NeXhlWWhacG10QlZSRnVURXo1OEtCcXhsY1BJekNTNU0zQTZ2UjNaUFNDdjlrSEtkdkFDUkZoa1pDanoKbVNqSnF3dU5XTmNlNkNQTFVlVUIrZDQ9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+  tls.crt: {{ .Values.tlsCrt | b64enc }}
+  tls.key: {{ .Values.tlsKey | b64enc }}
 
 ---
 
@@ -308,7 +308,7 @@ metadata:
     name: redis-volume
 spec:
   capacity:
-    storage: 10Gi
+    storage: {{ .Values.redisStorage }}
   accessModes:
     - ReadWriteOnce
   gcePersistentDisk:
@@ -326,7 +326,7 @@ metadata:
     name: postgres-volume
 spec:
   capacity:
-    storage: 10Gi
+    storage: {{ .Values.dbStorage }}
   accessModes:
     - ReadWriteOnce
   gcePersistentDisk:
@@ -345,7 +345,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: {{ .Values.redisStorage }}
 
 ---
 
@@ -359,4 +359,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: {{ .Values.dbStorage }}
+

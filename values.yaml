@@ -1,0 +1,91 @@
+# Mastodon
+localDomain: "mastodon.local"
+localHttps: "true"
+singleUserMode: "true"
+defaultLocale: "en"
+
+# Container Resources
+mastodonMemory: 350Mi
+mastodonCpu: 100m
+sidekiqMemory: 128Mi
+sidekiqCpu: 50m
+streamingMemory: 32Mi
+streamingCpu: 25m
+
+# Redis
+redisHost: redis
+redisPort: "6379"
+redisStorage: 10Gi
+redisMemory: 65Mi
+redisCpu: 50m
+
+# DB
+dbHost: postgres
+dbUser: mastodon
+dbName: mastodon
+dbPort: "5432"
+dbStorage: 10Gi
+
+# SMTP
+smtpAuthMethod: "none"
+smtpOpensslVerifyMode: "none"
+smtpPort: "25"
+smtpServer: "localhost"
+smtpFromAddress: "notifications@mastodon.local"
+smtpDeliveryMethod: "sendmail"
+
+# Secrets
+# Note: These are defaults you -must- override for production deployments
+dbPass: default-insecure-secret
+otpSecret: default-insecure-secret
+secretKeyBase: default-insecure-secret
+paperclipSecret: default-insecure-secret
+tlsCrt: |
+  -----BEGIN CERTIFICATE-----
+  MIIDCDCCAfCgAwIBAgIJAO148SPJf7KEMA0GCSqGSIb3DQEBCwUAMBkxFzAVBgNV
+  BAMMDm1hc3RvZG9uLmxvY2FsMB4XDTE4MDQwNzIzMTkyN1oXDTE5MDQwNzIzMTky
+  N1owGTEXMBUGA1UEAwwObWFzdG9kb24ubG9jYWwwggEiMA0GCSqGSIb3DQEBAQUA
+  A4IBDwAwggEKAoIBAQDhDuzjp8GsvsLeO0IAbGCPKa8W1WkLX6ersV7a32xwh+vv
+  FhkPkPs9Ckxf++rcpr5rsLnpSB37XJXt0rGfQd1jk6uR8InmAFD3GHttlXsXx7No
+  vrFNjyve+ZdeJa08Su9iAEby8rIdGvPHW9YCpB0obNDyu5vuZLyXoOy5gZ6fJIhm
+  IP33wrnzfRlZVuqjxOucUqckgc9TKUA5bYIUAqa3NFMIRPLSYdpw8bTxxBxO9gez
+  AOt8yIhpsf57TChmZlUqsJk6moHwTEKyWLqUpTOzKbJu2PEDwTRER2UWQ4rKGGJ2
+  MhwXFO5hNnJ13BQAUKl6UKACW4ngWiSUQ4xJZckHAgMBAAGjUzBRMB0GA1UdDgQW
+  BBSxfdYipqZ9Sz++2AY+nbG51vbAWTAfBgNVHSMEGDAWgBSxfdYipqZ9Sz++2AY+
+  nbG51vbAWTAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQDAcYyk
+  LZGrJxmSO5GOmMYYqND3hHxYFi27dgDsBbQhDN3owPP3pUp/AcEcvIWgWj9PdcKr
+  rNP+jzdBGKXUpAoRD47lJw4XxHxvAhtbw83TuxxAZ2+cgWJ8r9rbJs5ZPvsouwf1
+  t8zLuZrHALaYeRtayo6cdsDMbyktQiO51vjdh3Fw+AIRbJBjkoZDBDJ9VomSUKnx
+  5MXHGW5wi5QixeQO6DwG2CCmdeHgwIws8CHh40O4KGien2bruNekzdjynK3fYtrm
+  KkFqAxlfzed/yvCSR90yQDvQ01TYhg+TjfSVHZmEgLnyDPx/cRIO8IHu+37YU9Ey
+  xqlrBp6zzRKegg2l
+  -----END CERTIFICATE-----
+tlsKey: |
+  -----BEGIN PRIVATE KEY-----
+  MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDhDuzjp8GsvsLe
+  O0IAbGCPKa8W1WkLX6ersV7a32xwh+vvFhkPkPs9Ckxf++rcpr5rsLnpSB37XJXt
+  0rGfQd1jk6uR8InmAFD3GHttlXsXx7NovrFNjyve+ZdeJa08Su9iAEby8rIdGvPH
+  W9YCpB0obNDyu5vuZLyXoOy5gZ6fJIhmIP33wrnzfRlZVuqjxOucUqckgc9TKUA5
+  bYIUAqa3NFMIRPLSYdpw8bTxxBxO9gezAOt8yIhpsf57TChmZlUqsJk6moHwTEKy
+  WLqUpTOzKbJu2PEDwTRER2UWQ4rKGGJ2MhwXFO5hNnJ13BQAUKl6UKACW4ngWiSU
+  Q4xJZckHAgMBAAECggEBANi80PGk+uVriKsQEk3qEUuN7ypkN5dWdVjppdnO1NXC
+  cDp944CUNP/hzQ+aweHhSvzW4xN/+i+6SEESaTBf898TtWUEayjvIQn1r9gm3rZW
+  Abdb/dAdkzhW0ak/S4gG+mY8shcCFvnknORe0skUV2g48zjv6Ak7RkwYFCHKbIIA
+  k7zfN6Up0lrMDNdWCf3XXXlEBCE4cXPaHZVmsEUyKHKc4+Mo+KYyR6HFupKPpriC
+  wGRTh5J1rhzUBOvAxQJnJKP1UuvIdWyJpYqywtuiXfJiYq0NTAcN40nmBD0X10bX
+  21P9+kp03IG1Px9FZJJfooOFd27uwBALUGuPTer9jPECgYEA/aUHTGWz0+h00e0q
+  Zjeo4W3j5RXQ4+1llTDWPmELKtjUb8xYLThAszEiFv3plK8XeObLiLEzyoOyeaac
+  /Ng9r3KdUWibJgk2Ok5+FXDsevoSTZ0w3wsTj1l5au3LpJQJ0x/OyXryYpoXUSA7
+  NIm+XrvdoGEl/Gw+hZaY4cGAXE0CgYEA4yXwx/u5Hv0sxQUOCLGkiDYqbjhFvsEa
+  PrIYrFs9EIYEnTNKN+IrzjNFoBOpO/XalEC9+zel57UKMhglvp5XmvEB8vgepsA5
+  Sdzx+lVW7e/KkvjfG5lqdOrlivl1DONKYR05L60y1ORHOdkHiOXQjOD90g+wnstf
+  3jTfPGnJFKMCgYAVqWtnJeRmu5qGdyfA1Q4SOo1U+jj9zj93r1UMvML0ZNI3vg7l
+  xcEYzKBpsEOrlAyAIc3OHbwbloW+h/EuUtVpz3MKCdH+PJkp/5wa/qrjkcnQYRVU
+  ZyDDhFOvQyG6K35vTm8dm+dpblmBbyw/P2hHtOmnkcRpu2DXjdX+qcTpnQKBgDpH
+  rsqw1GOWE9mNHXevlIZ6V1KmT4bM5t31Ng1q73UA3cgzs7Q47IJgd1nGEaLXxrhJ
+  EDWXppKXycDmnzCUUefoNFbRwJOKOGiyLsfLA53S64fgIOZk64KKDlElBhpDav8V
+  z2ljJ+qlk3zNKXi/dk3fIGC4M9naVoOdzzUh8zy/AoGAVv+SC2R6h9B8wg02SWD5
+  +DcSQqDU0taHWuriLoefWbvId0lUxGUre5dDQOnK9jBUUjOwM9M6ryTXR5tSy+LD
+  Z2znMyxeYhZpmtBVRFuTEz58KBqxlcPIzCS5M3A6vR3ZPSCv9kHKdvACRFhkZCjz
+  mSjJqwuNWNce6CPLUeUB+d4=
+  -----END PRIVATE KEY-----
