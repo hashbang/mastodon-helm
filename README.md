@@ -23,9 +23,10 @@ dependencies such as redis, postgres, opensmtpd etc.
     helm init
     ```
 
-2. Install Helm chart
+2. Install Helm dependencies and chart
 
     ```
+    helm dependency update
     helm install -n mastodon .
     ```
 
