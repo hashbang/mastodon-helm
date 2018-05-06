@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mastodon
+  namespace: mastodon
+spec:
+  selector:
+    matchLabels:
+      app: mastodon
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mastodon
+    spec:
+      volumes:
+      - name: mastodon-assets
+        emptyDir: {}
+      - name: mastodon-packs
+        emptyDir: {}
+      - name: mastodon-system
+        emptyDir: {}
+      containers:
+      - name: web
+        image: tootsuite/mastodon:v2.3.3
+        command: [
+          "/bin/bash", "-c",
+            "rake assets:precompile && \
+             rake db:migrate && \
+             bundle exec rails s -p 3000 -b 0.0.0.0"
+        ]
+        ports:
+        - name: web
+          containerPort: 3000
+        resources:
+          requests:
+            memory: {{ .Values.mastodonMemory }}
+            cpu: {{ .Values.mastodonCpu }}
+        envFrom:
+        - configMapRef:
+            name: mastodon-config
+        - secretRef:
+            name: mastodon-secrets
+        volumeMounts:
+          - mountPath: /mastodon/public/assets
+            name: mastodon-assets
+          - mountPath: /mastodon/public/packs
+            name: mastodon-packs
+          - mountPath: /mastodon/public/system
+            name: mastodon-system
+      - name: sidekiq
+        image: tootsuite/mastodon:v2.3.3
+        command: [
+          "bundle", "exec", "sidekiq",
+            "-q", "default",
+            "-q", "mailers",
+            "-q", "pull",
+            "-q", "push"
+        ]
+        resources:
+          requests:
+            memory: {{ .Values.sidekiqMemory }}
+            cpu: {{ .Values.sidekiqCpu }}
+        envFrom:
+        - configMapRef:
+            name: mastodon-config
+        - secretRef:
+            name: mastodon-secrets
+        volumeMounts:
+          - mountPath: /mastodon/public/assets
+            name: mastodon-assets
+          - mountPath: /mastodon/public/packs
+            name: mastodon-packs
+          - mountPath: /mastodon/public/system
+            name: mastodon-system
+      - name: streaming
+        image: tootsuite/mastodon:v2.3.3
+        command: [ "yarn", "start" ]
+        ports:
+        - name: streaming
+          containerPort: 4000
+        resources:
+          requests:
+            memory: {{ .Values.streamingMemory }}
+            cpu: {{ .Values.streamingCpu }}
+        envFrom:
+        - configMapRef:
+            name: mastodon-config
+        - secretRef:
+            name: mastodon-secrets
+      - name: smtpd
+        image: wodby/opensmtpd:6-1.3.0
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mastodon
+  namespace: mastodon
+spec:
+  selector:
+    app: mastodon
+  ports:
+  - name: web
+    port: 3000
+    targetPort: web
+  - name: streaming
+    port: 4000
+    targetPort: streaming

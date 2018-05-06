@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastodon-config
+  namespace: mastodon
+data:
+  REDIS_HOST: "{{ .Values.redisHost }}"
+  REDIS_PORT: "{{ .Values.redisPort }}"
+  DB_HOST: "{{ .Values.dbHost }}"
+  DB_USER: "{{ .Values.dbUser }}"
+  DB_NAME: "{{ .Values.dbName }}"
+  DB_PORT: "{{ .Values.dbPort }}"
+  LOCAL_DOMAIN: "{{ .Values.localDomain }}"
+  LOCAL_HTTPS: "{{ .Values.localHttps }}"
+  SINGLE_USER_MODE: "{{ .Values.singleUserMode }}"
+  DEFAULT_LOCALE: "{{ .Values.defaultLocal }}"
+  SMTP_AUTH_METHOD: "{{ .Values.smtpAuthMethod }}"
+  SMTP_OPENSSL_VERIFY_MODE: "{{ .Values.smtpOpensslVerifyMode }}"
+  SMTP_PORT: "{{ .Values.smtpPort }}"
+  SMTP_SERVER: "{{ .Values.smtpServer }}"
+  SMTP_FROM_ADDRESS: "{{ .Values.smtpFromAddress }}"
+  SMTP_DELIVERY_METHOD: "{{ .Values.smtpDeliveryMethod }}"

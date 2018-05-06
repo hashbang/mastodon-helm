@@ -1,0 +1,34 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: redis
+  namespace: mastodon
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  replicas: 1
+  template:
+    metadata:
+      namespace: mastodon
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: {{ .Values.redisMemory }}
+            cpu: {{ .Values.redisCPU }}
+        ports:
+        - name: redis
+          containerPort: 6379
+        volumeMounts:
+        - name: redis-volume
+          mountPath: /data
+      volumes:
+      - name: redis-volume
+        persistentVolumeClaim:
+          claimName: redis-volume-claim

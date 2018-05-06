@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: mastodon
+spec:
+  tls:
+    - hosts:
+      - mastodon.local
+      secretName: mastodon-tls
+  rules:
+    - host: mastodon.local
+      http:
+        paths:
+          - backend:
+              serviceName: mastodon
+              servicePort: web
+

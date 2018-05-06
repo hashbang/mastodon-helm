@@ -1,0 +1,30 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-volume
+  namespace: mastodon
+  labels:
+    name: postgres-volume
+spec:
+  capacity:
+    storage: {{ .Values.dbStorage }}
+  accessModes:
+    - ReadWriteOnce
+  gcePersistentDisk:
+    pdName: "postgres-volume"
+    fsType: "ext4"
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-volume-claim
+  namespace: mastodon
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.dbStorage }}
+

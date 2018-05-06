@@ -1,0 +1,38 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: postgres
+  namespace: mastodon
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:alpine
+        env:
+          - name: POSTGRES_USER
+            value: mastodon
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: DB_PASS
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        ports:
+          - name: postgres
+            containerPort: 5432
+        volumeMounts:
+          - mountPath: /var/lib/postgresql/data
+            name: postgres-volume
+      volumes:
+      - name: postgres-volume
+        persistentVolumeClaim:
+          claimName: postgres-volume-claim
