@@ -11,37 +11,65 @@ mastodon:
   defaultLocale: "en"
   smtpFromAddress: "notifications@mastodon.local"
   secrets:
-    otp: default-insecure-secret
-    keyBase: default-insecure-secret
-    paperclip: default-insecure-secret
+    otp: {{ randAlphaNum 42 | b64enc | quote }}
+    keyBase: {{ randAlphaNum 42 | b64enc | quote }}
+    paperclip: {{ randAlphaNum 42 | b64enc | quote }}
   web:
-    memory: 350Mi
-    cpu: 100m
+    resources:
+      requests:
+        memory: 350Mi
+        cpu: 100m
   sidekiq:
-    memory: 128Mi
-    cpu: 50m
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 50m
   streaming:
-    memory: 32Mi
-    cpu: 25m
+    resources:
+      requests:
+        memory: 32Mi
+        cpu: 25m
 
 redis:
-  storage: 10Gi
-  memory: 65Mi
-  cpu: 50m
+  enabled: true
+  master:
+    persistence:
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+  slave:
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
 
 postgresql:
-  storage: 10Gi
-  memory: 65Mi
-  cpu: 50m
-
+  enabled: true
+  postgresDatabase: mastodon
+  persistence:
+    size: 8Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
 
 # Temporary hack. Should be broken out into dedicated chart
-smtpd:
-  container: wodby/opensmtpd:6-1.3.0
-  memory: 65Mi
-  cpu: 50m
+opensmtpd:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: wodby/opensmtpd
+    tag: 6-1.3.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: 65Mi
+      cpu: 50m
 
 ## Temporary hack until pattern for auto generating dev certs is discovered
+## Should swap this out with cert-manager for production
 tlsCrt: |
   -----BEGIN CERTIFICATE-----
   MIIDCDCCAfCgAwIBAgIJAO148SPJf7KEMA0GCSqGSIb3DQEBCwUAMBkxFzAVBgNV

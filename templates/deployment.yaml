@@ -44,28 +44,28 @@ spec:
         ports:
         - name: web
           containerPort: 3000
-#        livenessProbe:
-#          httpGet:
-#            path: /about
-#            port: web
-#            httpHeaders:
-#            - name: X-Forwarded-Proto
-#              value: "https"
-#          initialDelaySeconds: 60
-#          periodSeconds: 3
-#        readinessProbe:
-#          httpGet:
-#            path: /about
-#            port: web
-#            httpHeaders:
-#            - name: X-Forwarded-Proto
-#              value: "https"
-#          initialDelaySeconds: 3
-#          periodSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /about
+            port: web
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: "https"
+          initialDelaySeconds: 60
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /about
+            port: web
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: "https"
+          initialDelaySeconds: 3
+          periodSeconds: 3
         resources:
           requests:
-            memory: {{ .Values.mastodon.web.memory }}
-            cpu: {{ .Values.mastodon.web.cpu }}
+            memory: {{ .Values.mastodon.web.resources.requests.memory }}
+            cpu: {{ .Values.mastodon.web.resources.requests.cpu }}
         envFrom:
         - configMapRef:
             name: {{ template "fullname" . }}
@@ -101,8 +101,8 @@ spec:
         ]
         resources:
           requests:
-            memory: {{ .Values.mastodon.sidekiq.memory }}
-            cpu: {{ .Values.mastodon.sidekiq.cpu }}
+            memory: {{ .Values.mastodon.sidekiq.resources.requests.memory }}
+            cpu: {{ .Values.mastodon.sidekiq.resources.requests.cpu }}
         envFrom:
         - configMapRef:
             name: {{ template "fullname" . }}
@@ -124,19 +124,21 @@ spec:
           containerPort: 4000
         resources:
           requests:
-            memory: {{ .Values.mastodon.streaming.memory }}
-            cpu: {{ .Values.mastodon.streaming.cpu }}
+            memory: {{ .Values.mastodon.streaming.resources.requests.memory }}
+            cpu: {{ .Values.mastodon.streaming.resources.requests.cpu }}
         envFrom:
         - configMapRef:
             name: {{ template "fullname" . }}
         - secretRef:
             name: {{ template "fullname" . }}
       - name: {{ template "fullname" . }}-smtpd
-        image: "{{ .Values.smtpd.container }}"
+        image: "{{ .Values.opensmtpd.container }}"
+        image: "{{ .Values.opensmtpd.image.registry }}/{{ .Values.opensmtpd.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         resources:
           requests:
-            memory: {{ .Values.smtpd.memory }}
-            cpu: {{ .Values.smtpd.cpu }}
+            memory: {{ .Values.opensmtpd.resources.requests.memory }}
+            cpu: {{ .Values.opensmtpd.resources.requests.cpu }}
         securityContext:
           capabilities:
             add: ["NET_ADMIN"]
