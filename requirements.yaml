@@ -2,6 +2,8 @@ dependencies:
   - name: postgresql
     version: 0.11.0
     repository: https://kubernetes-charts.storage.googleapis.com/
+    condition: dbLocal
   - name: redis
     version: 3.1.0
     repository: https://kubernetes-charts.storage.googleapis.com/
+    condition: redisLocal

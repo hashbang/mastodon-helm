@@ -1,22 +1,26 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mastodon-config
-  namespace: mastodon
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 data:
-  REDIS_HOST: "{{ .Values.redisHost }}"
-  REDIS_PORT: "{{ .Values.redisPort }}"
-  DB_HOST: "{{ .Values.dbHost }}"
-  DB_USER: "{{ .Values.dbUser }}"
-  DB_NAME: "{{ .Values.dbName }}"
-  DB_PORT: "{{ .Values.dbPort }}"
-  LOCAL_DOMAIN: "{{ .Values.localDomain }}"
-  LOCAL_HTTPS: "{{ .Values.localHttps }}"
-  SINGLE_USER_MODE: "{{ .Values.singleUserMode }}"
-  DEFAULT_LOCALE: "{{ .Values.defaultLocal }}"
-  SMTP_AUTH_METHOD: "{{ .Values.smtpAuthMethod }}"
-  SMTP_OPENSSL_VERIFY_MODE: "{{ .Values.smtpOpensslVerifyMode }}"
-  SMTP_PORT: "{{ .Values.smtpPort }}"
-  SMTP_SERVER: "{{ .Values.smtpServer }}"
-  SMTP_FROM_ADDRESS: "{{ .Values.smtpFromAddress }}"
-  SMTP_DELIVERY_METHOD: "{{ .Values.smtpDeliveryMethod }}"
+  REDIS_HOST: "{{ .Release.Name }}-redis"
+  REDIS_PORT: "6397"
+  DB_HOST: "{{ .Release.Name }}-postgresql"
+  DB_USER: "mastodon"
+  DB_NAME: "mastodon"
+  DB_PORT: "5432"
+  LOCAL_DOMAIN: "{{ .Values.domain }}"
+  LOCAL_HTTPS: "true"
+  SINGLE_USER_MODE: "{{ .Values.mastodon.singleUserMode }}"
+  DEFAULT_LOCALE: "{{ .Values.mastodon.defaultLocale }}"
+  SMTP_AUTH_METHOD: "none"
+  SMTP_OPENSSL_VERIFY_MODE: "none"
+  SMTP_PORT: "25"
+  SMTP_SERVER: "localhost"
+  SMTP_FROM_ADDRESS: "{{ .Values.mastodon.smtpFromAddress }}"
+  SMTP_DELIVERY_METHOD: "sendmail"

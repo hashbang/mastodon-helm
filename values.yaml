@@ -1,45 +1,47 @@
-# Mastodon
-localDomain: "mastodon.local"
-localHttps: "true"
-singleUserMode: "true"
-defaultLocale: "en"
+domain: "mastodon.local"
 
-# Container Resources
-mastodonMemory: 350Mi
-mastodonCpu: 100m
-sidekiqMemory: 128Mi
-sidekiqCpu: 50m
-streamingMemory: 32Mi
-streamingCpu: 25m
+image:
+  registry: docker.io
+  repository: tootsuite/mastodon
+  tag: v2.3.3
+  pullPolicy: IfNotPresent
 
-# Redis
-redisHost: redis
-redisPort: "6379"
-redisStorage: 10Gi
-redisMemory: 65Mi
-redisCpu: 50m
+mastodon:
+  singleUserMode: "true"
+  defaultLocale: "en"
+  smtpFromAddress: "notifications@{{ .Values.domain }}"
+  secrets:
+    otp: default-insecure-secret
+    keyBase: default-insecure-secret
+    paperclip: default-insecure-secret
+  web:
+    memory: 350Mi
+    cpu: 100m
+  sidekiq:
+    memory: 128Mi
+    cpu: 50m
+  streaming:
+    memory: 32Mi
+    cpu: 25m
 
-# DB
-dbHost: postgres
-dbUser: mastodon
-dbName: mastodon
-dbPort: "5432"
-dbStorage: 10Gi
+redis:
+  storage: 10Gi
+  memory: 65Mi
+  cpu: 50m
 
-# SMTP
-smtpAuthMethod: "none"
-smtpOpensslVerifyMode: "none"
-smtpPort: "25"
-smtpServer: "localhost"
-smtpFromAddress: "notifications@mastodon.local"
-smtpDeliveryMethod: "sendmail"
+postgresql:
+  storage: 10Gi
+  memory: 65Mi
+  cpu: 50m
 
-# Secrets
-# Note: These are defaults you -must- override for production deployments
-dbPass: default-insecure-secret
-otpSecret: default-insecure-secret
-secretKeyBase: default-insecure-secret
-paperclipSecret: default-insecure-secret
+
+# Temporary hack. Should be broken out into dedicated chart
+smtpd:
+  container: wodby/opensmtpd:6-1.3.0
+  memory: 65Mi
+  cpu: 50m
+
+## Temporary hack until pattern for auto generating dev certs is discovered
 tlsCrt: |
   -----BEGIN CERTIFICATE-----
   MIIDCDCCAfCgAwIBAgIJAO148SPJf7KEMA0GCSqGSIb3DQEBCwUAMBkxFzAVBgNV
@@ -60,6 +62,7 @@ tlsCrt: |
   KkFqAxlfzed/yvCSR90yQDvQ01TYhg+TjfSVHZmEgLnyDPx/cRIO8IHu+37YU9Ey
   xqlrBp6zzRKegg2l
   -----END CERTIFICATE-----
+
 tlsKey: |
   -----BEGIN PRIVATE KEY-----
   MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDhDuzjp8GsvsLe

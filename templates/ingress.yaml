@@ -1,18 +1,21 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: ingress
-  namespace: mastodon
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   tls:
     - hosts:
-      - mastodon.local
-      secretName: mastodon-tls
+      - {{ .Values.domain }}
+      secretName: {{ template "fullname" . }}
   rules:
-    - host: mastodon.local
+    - host: {{ .Values.domain }}
       http:
         paths:
           - backend:
               serviceName: mastodon
               servicePort: web
-
