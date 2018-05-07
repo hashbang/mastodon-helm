@@ -9,7 +9,7 @@ image:
 mastodon:
   singleUserMode: "true"
   defaultLocale: "en"
-  smtpFromAddress: "notifications@{{ .Values.domain }}"
+  smtpFromAddress: "notifications@mastodon.local"
   secrets:
     otp: default-insecure-secret
     keyBase: default-insecure-secret

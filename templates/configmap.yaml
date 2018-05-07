@@ -11,7 +11,7 @@ data:
   REDIS_HOST: "{{ .Release.Name }}-redis"
   REDIS_PORT: "6397"
   DB_HOST: "{{ .Release.Name }}-postgresql"
-  DB_USER: "mastodon"
+  DB_USER: "postgres"
   DB_NAME: "mastodon"
   DB_PORT: "5432"
   LOCAL_DOMAIN: "{{ .Values.domain }}"

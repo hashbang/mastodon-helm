@@ -22,7 +22,7 @@ spec:
       imagePullSecrets:
       {{- range .Values.image.pullSecrets }}
         - name: {{ . }}
-      {{- end}}
+      {{- end }}
       {{- end }}
       volumes:
       - name: mastodon-assets
@@ -44,24 +44,24 @@ spec:
         ports:
         - name: web
           containerPort: 3000
-        livenessProbe:
-          httpGet:
-            path: /about
-            port: web
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: "https"
-          initialDelaySeconds: 60
-          periodSeconds: 3
-        readinessProbe:
-          httpGet:
-            path: /about
-            port: web
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: "https"
-          initialDelaySeconds: 3
-          periodSeconds: 3
+#        livenessProbe:
+#          httpGet:
+#            path: /about
+#            port: web
+#            httpHeaders:
+#            - name: X-Forwarded-Proto
+#              value: "https"
+#          initialDelaySeconds: 60
+#          periodSeconds: 3
+#        readinessProbe:
+#          httpGet:
+#            path: /about
+#            port: web
+#            httpHeaders:
+#            - name: X-Forwarded-Proto
+#              value: "https"
+#          initialDelaySeconds: 3
+#          periodSeconds: 3
         resources:
           requests:
             memory: {{ .Values.mastodon.web.memory }}
@@ -100,9 +100,9 @@ spec:
             cpu: {{ .Values.mastodon.sidekiq.cpu }}
         envFrom:
         - configMapRef:
-            name: mastodon-config
+            name: {{ template "fullname" . }}
         - secretRef:
-            name: mastodon-secrets
+            name: {{ template "fullname" . }}
         volumeMounts:
           - mountPath: /mastodon/public/assets
             name: mastodon-assets
@@ -123,9 +123,9 @@ spec:
             cpu: {{ .Values.mastodon.streaming.cpu }}
         envFrom:
         - configMapRef:
-            name: mastodon-config
+            name: {{ template "fullname" . }}
         - secretRef:
-            name: mastodon-secrets
+            name: {{ template "fullname" . }}
       - name: {{ template "fullname" . }}-smtpd
         image: "{{ .Values.smtpd.container }}"
         resources:
