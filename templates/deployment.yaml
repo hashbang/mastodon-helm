@@ -77,6 +77,11 @@ spec:
             secretKeyRef:
               name: "{{ .Release.Name }}-postgresql"
               key: postgres-password
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Release.Name }}-redis"
+              key: redis-password
         volumeMounts:
           - mountPath: /mastodon/public/assets
             name: mastodon-assets
