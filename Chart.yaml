@@ -2,7 +2,7 @@ name: mastodon
 description: A Helm chart for Kubernetes
 home: https://github.com/hashbang/mastodon-helm
 apiVersion: v1
-tillerVersion: 2.8.2
+tillerVersion: 2.9.1
 appVersion: 2.3.3
 version: 0.1.0
 maintainers:

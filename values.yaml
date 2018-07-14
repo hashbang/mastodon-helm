@@ -3,21 +3,22 @@ domain: "mastodon.local"
 image:
   registry: docker.io
   repository: tootsuite/mastodon
-  tag: v2.3.3
+  tag: v2.4.3
   pullPolicy: IfNotPresent
 
 mastodon:
   singleUserMode: "true"
   defaultLocale: "en"
+  smtpAuthMethod: "none"
+  smtpOpensslVerifyMode: "none"
   smtpFromAddress: "notifications@mastodon.local"
-  secrets:
-    otp: {{ randAlphaNum 42 | b64enc | quote }}
-    keyBase: {{ randAlphaNum 42 | b64enc | quote }}
-    paperclip: {{ randAlphaNum 42 | b64enc | quote }}
+  smtpServer: "localhost"
+  smtpPort: "25"
+  localHttps: "true"
   web:
     resources:
       requests:
-        memory: 350Mi
+        memory: 1Gi
         cpu: 100m
   sidekiq:
     resources:
@@ -54,19 +55,6 @@ postgresql:
     requests:
       memory: 256Mi
       cpu: 100m
-
-# Temporary hack. Should be broken out into dedicated chart
-opensmtpd:
-  enabled: true
-  image:
-    registry: docker.io
-    repository: wodby/opensmtpd
-    tag: 6-1.3.0
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      memory: 65Mi
-      cpu: 50m
 
 ## Temporary hack until pattern for auto generating dev certs is discovered
 ## Should swap this out with cert-manager for production

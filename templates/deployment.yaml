@@ -24,6 +24,15 @@ spec:
         - name: {{ . }}
       {{- end }}
       {{- end }}
+      tolerations:
+      - key: "node.kubernetes.io/unreachable"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 1800
+      - key: "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 1800
       volumes:
       - name: mastodon-assets
         emptyDir: {}
@@ -37,8 +46,8 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         command: [
           "/bin/bash", "-c",
-            "rake assets:precompile && \
-             rake db:migrate && \
+            "bundle exec rake assets:precompile && \
+             bundle exec rake db:migrate --trace && \
              bundle exec rails s -p 3000 -b 0.0.0.0"
         ]
         ports:
@@ -51,8 +60,8 @@ spec:
             httpHeaders:
             - name: X-Forwarded-Proto
               value: "https"
-          initialDelaySeconds: 60
-          periodSeconds: 3
+          initialDelaySeconds: 900
+          periodSeconds: 5
         readinessProbe:
           httpGet:
             path: /about
@@ -60,7 +69,7 @@ spec:
             httpHeaders:
             - name: X-Forwarded-Proto
               value: "https"
-          initialDelaySeconds: 3
+          initialDelaySeconds: 900
           periodSeconds: 3
         resources:
           requests:
@@ -131,14 +140,3 @@ spec:
             name: {{ template "fullname" . }}
         - secretRef:
             name: {{ template "fullname" . }}
-      - name: {{ template "fullname" . }}-smtpd
-        image: "{{ .Values.opensmtpd.container }}"
-        image: "{{ .Values.opensmtpd.image.registry }}/{{ .Values.opensmtpd.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
-        resources:
-          requests:
-            memory: {{ .Values.opensmtpd.resources.requests.memory }}
-            cpu: {{ .Values.opensmtpd.resources.requests.cpu }}
-        securityContext:
-          capabilities:
-            add: ["NET_ADMIN"]
